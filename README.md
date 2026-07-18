@@ -1,24 +1,43 @@
-# Scrabble Scorer (Fastly Compute WASM)
+# Scrabble Scorer 
 
 A stateless Scrabble scoring application built with Go and running on Fastly Compute. This project allows 2-4 players to track their Scrabble scores, calculate word values with multipliers, and manage game history directly at the edge.
 
 ## Features
 
-- **Stateless Architecture**: Game state is managed on the client side and passed to the WASM backend for processing, ensuring reliability in ephemeral environments.
 - **Dynamic Scoring**: Automatically calculates Scrabble word scores based on standard letter values.
 - **Multipliers Support**: Supports Double Letter (DL), Triple Letter (TL), Double Word (DW), and Triple Word (TW) multipliers.
 - **Bingo Bonus**: Automatically provides an option to add a 50-point bonus when a player uses 7 or more letters in a word.
 - **Player Management**: Supports 2 to 4 players with individual score tracking and word history.
-- **Tailwind CSS Frontend**: A clean, responsive UI built with Tailwind CSS.
 
-## Getting Started
+
+## How to Use
+
+1. **Start a Game**: Enter the names of 2 to 4 players on the initial screen and click "Start Game".
+2. **Add Scores**:
+   - Select a player.
+   - Enter the word played.
+   - (Optional) Assign multipliers to specific letters by selecting them from the dropdowns below the word input.
+   - (Optional) If the word uses all 7 tiles (a "Bingo"), a checkbox will appear to add the 50-point bonus.
+   - Alternatively, you can enter a raw numeric score if you've already calculated it.
+   - Click "Add Word". You can add multiple words per round.
+   - Once all words for the round are added, click "End Round" to finalize the score for that turn.
+3. **Score History**: The score history table now shows the words played by each player in every round, providing a complete record of the game.
+4. **Finish Game**:
+   - Once the game is over, click "Finish Game".
+   - Select the player who went out first (the winner).
+   - Enter the remaining point values for the other players.
+   - Click "Submit Final Scores" to see the final standings.
+  
+     
+
+
+
+## Local Development
 
 ### Prerequisites
 
 - [Go 1.23](https://go.dev/dl/) or later.
 - [Fastly CLI](https://github.com/fastly/cli) for local development and deployment.
-
-### Local Development
 
 1. Clone the repository:
    ```bash
@@ -39,23 +58,6 @@ go test ./internal/...
 ```
 This will test the scoring logic, data models, and serialization.
 
-## How to Use
-
-1. **Start a Game**: Enter the names of 2 to 4 players on the initial screen and click "Start Game".
-2. **Add Scores**:
-   - Select a player.
-   - Enter the word played.
-   - (Optional) Assign multipliers to specific letters by selecting them from the dropdowns below the word input.
-   - (Optional) If the word uses all 7 tiles (a "Bingo"), a checkbox will appear to add the 50-point bonus.
-   - Alternatively, you can enter a raw numeric score if you've already calculated it.
-   - Click "Add Word". You can add multiple words per round.
-   - Once all words for the round are added, click "End Round" to finalize the score for that turn.
-3. **Score History**: The score history table now shows the words played by each player in every round, providing a complete record of the game.
-4. **Finish Game**:
-   - Once the game is over, click "Finish Game".
-   - Select the player who went out first (the winner).
-   - Enter the remaining point values for the other players.
-   - Click "Submit Final Scores" to see the final standings.
 
 ## Technical Details
 

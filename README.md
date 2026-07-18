@@ -7,6 +7,7 @@ A stateless Scrabble scoring application built with Go and running on Fastly Com
 - **Stateless Architecture**: Game state is managed on the client side and passed to the WASM backend for processing, ensuring reliability in ephemeral environments.
 - **Dynamic Scoring**: Automatically calculates Scrabble word scores based on standard letter values.
 - **Multipliers Support**: Supports Double Letter (DL), Triple Letter (TL), Double Word (DW), and Triple Word (TW) multipliers.
+- **Bingo Bonus**: Automatically provides an option to add a 50-point bonus when a player uses 7 or more letters in a word.
 - **Player Management**: Supports 2 to 4 players with individual score tracking and word history.
 - **Tailwind CSS Frontend**: A clean, responsive UI built with Tailwind CSS.
 
@@ -39,6 +40,7 @@ A stateless Scrabble scoring application built with Go and running on Fastly Com
    - Select a player.
    - Enter the word played.
    - (Optional) Assign multipliers to specific letters by selecting them from the dropdowns below the word input.
+   - (Optional) If the word uses all 7 tiles (a "Bingo"), a checkbox will appear to add the 50-point bonus.
    - Alternatively, you can enter a raw numeric score if you've already calculated it.
    - Click "Add Word". You can add multiple words per round.
    - Once all words for the round are added, click "End Round" to finalize the score for that turn.

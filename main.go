@@ -28,7 +28,7 @@ var letterValues = map[rune]int{
 	'Q': 10, 'Z': 10,
 }
 
-func CalculateWordScore(word string, multipliers []string) int {
+func CalculateWordScore(word string, multipliers []string, isBingo bool) int {
 	totalScore := 0
 	wordMultiplier := 1
 
@@ -60,7 +60,11 @@ func CalculateWordScore(word string, multipliers []string) int {
 		}
 	}
 
-	return totalScore * wordMultiplier
+	score := totalScore * wordMultiplier
+	if isBingo {
+		score += 50
+	}
+	return score
 }
 
 type RoundRecord struct {
@@ -125,6 +129,7 @@ func handleScore(w fsthttp.ResponseWriter, r *fsthttp.Request) {
 		PlayerIndex int      `json:"playerIndex"`
 		Input       string   `json:"input"`
 		Multipliers []string `json:"multipliers"`
+		IsBingo     bool     `json:"isBingo"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -149,7 +154,7 @@ func handleScore(w fsthttp.ResponseWriter, r *fsthttp.Request) {
 		score = val
 		game.Players[req.PlayerIndex].LastWord = req.Input
 	} else {
-		score = CalculateWordScore(req.Input, req.Multipliers)
+		score = CalculateWordScore(req.Input, req.Multipliers, req.IsBingo)
 		game.Players[req.PlayerIndex].LastWord = req.Input
 	}
 

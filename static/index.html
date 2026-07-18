@@ -116,6 +116,10 @@
                         <input type="text" id="input-${i}" placeholder="Word or Score" 
                                class="w-full p-2 border rounded focus:ring-2 focus:ring-indigo-300 outline-none text-sm uppercase">
                         <div id="multipliers-${i}" class="flex flex-wrap gap-2 text-xs"></div>
+                        <div id="bingo-container-${i}" class="flex items-center space-x-2 text-sm text-gray-600 hidden">
+                            <input type="checkbox" id="bingo-${i}" class="rounded text-indigo-600 focus:ring-indigo-500">
+                            <label for="bingo-${i}">All 7 tiles used? (+50)</label>
+                        </div>
                         <div class="grid grid-cols-2 gap-2">
                             <button onclick="addScore(${i})" 
                                     class="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded text-sm transition">
@@ -157,7 +161,13 @@
 
         function updateMultipliers(playerIndex, value) {
             const container = document.getElementById(`multipliers-${playerIndex}`);
+            const bingoContainer = document.getElementById(`bingo-container-${playerIndex}`);
             if (isNaN(value) && value.length > 0) {
+                if (value.length >= 7) {
+                    bingoContainer.classList.remove('hidden');
+                } else {
+                    bingoContainer.classList.add('hidden');
+                }
                 container.innerHTML = value.split('').map((char, charIdx) => `
                     <div class="flex flex-col items-center">
                         <span class="text-[10px] text-gray-400 mb-1">${char.toUpperCase()}</span>
@@ -181,16 +191,19 @@
             if (!input) return;
 
             const multipliers = [];
+            let isBingo = false;
             if (isNaN(input)) {
                 for (let i = 0; i < input.length; i++) {
                     const sel = document.getElementById(`mult-${playerIndex}-${i}`);
                     multipliers.push(sel ? sel.value : "none");
                 }
+                const bingoCheck = document.getElementById(`bingo-${playerIndex}`);
+                isBingo = bingoCheck ? bingoCheck.checked : false;
             }
             const response = await fetch('/api/score', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ game: gameData, playerIndex, input, multipliers })
+                body: JSON.stringify({ game: gameData, playerIndex, input, multipliers, isBingo })
             });
             gameData = await response.json();
             renderGame();

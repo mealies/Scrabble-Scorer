@@ -31,7 +31,13 @@ A stateless Scrabble scoring application built with Go and running on Fastly Com
    fastly compute serve
    ```
 
-3. Open your browser and navigate to `http://127.0.0.1:7676`.
+### Testing
+
+To run the unit tests (requires Go installed locally):
+```bash
+go test ./internal/...
+```
+This will test the scoring logic, data models, and serialization.
 
 ## How to Use
 

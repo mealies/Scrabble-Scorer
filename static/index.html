@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scrabble Scorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4 md:p-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
+        <h1 class="text-3xl font-bold text-center text-indigo-600 mb-8">Scrabble Scorer</h1>
+
+        <div id="setup-view" class="space-y-6">
+            <h2 class="text-xl font-semibold border-b pb-2">New Game</h2>
+            <div id="player-names" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <input type="text" placeholder="Player 1 Name" class="name-input p-2 border rounded focus:ring-2 focus:ring-indigo-300 outline-none">
+                <input type="text" placeholder="Player 2 Name" class="name-input p-2 border rounded focus:ring-2 focus:ring-indigo-300 outline-none">
+                <input type="text" placeholder="Player 3 Name" class="name-input p-2 border rounded focus:ring-2 focus:ring-indigo-300 outline-none">
+                <input type="text" placeholder="Player 4 Name" class="name-input p-2 border rounded focus:ring-2 focus:ring-indigo-300 outline-none">
+            </div>
+            <button onclick="startGame()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-200">Start Game</button>
+        </div>
+
+        <div id="game-view" class="hidden space-y-8">
+            <div id="players-list" class="grid grid-cols-1 sm:grid-cols-2 gap-6"></div>
+            
+            <div class="flex justify-center border-t pt-8">
+                <button onclick="showFinishView()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded transition duration-200">Finish Game</button>
+            </div>
+
+            <div id="history-section" class="mt-12 overflow-x-auto">
+                <h3 class="text-xl font-semibold mb-4 border-b pb-2">Score History</h3>
+                <table id="history-table" class="min-w-full divide-y divide-gray-200 shadow-sm border rounded-lg">
+                    <thead id="history-head" class="bg-gray-50">
+                        <tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Round</th></tr>
+                    </thead>
+                    <tbody id="history-body" class="bg-white divide-y divide-gray-200"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="finish-view" class="hidden space-y-6">
+            <h2 class="text-2xl font-semibold border-b pb-2">Finish Game</h2>
+            <div class="bg-indigo-50 p-6 rounded-lg">
+                <p class="font-medium mb-4">Who ended the game?</p>
+                <div id="winner-selection" class="space-y-2"></div>
+            </div>
+            
+            <div id="leftovers-inputs" class="space-y-4"></div>
+            
+            <button onclick="submitFinish()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-200">Submit Final Scores</button>
+        </div>
+
+        <div id="result-view" class="hidden space-y-8 text-center">
+            <h2 class="text-3xl font-bold text-indigo-600">Final Results</h2>
+            <div id="final-table" class="inline-block min-w-full sm:min-w-[400px] bg-white border rounded-lg overflow-hidden shadow-md mx-auto"></div>
+            <button onclick="location.reload()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-8 rounded transition duration-200">New Game</button>
+        </div>
+    </div>
+
+    <script>
+        let gameData = null;
+
+        async function startGame() {
+            const names = Array.from(document.querySelectorAll('.name-input'))
+                .map(i => i.value.trim())
+                .filter(n => n !== "");
+            
+            if (names.length < 2) {
+                alert("At least 2 players required");
+                return;
+            }
+
+            const response = await fetch('/api/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(names)
+            });
+            gameData = await response.json();
+            renderGame();
+        }
+
+        function renderGame() {
+            document.getElementById('setup-view').classList.add('hidden');
+            document.getElementById('game-view').classList.remove('hidden');
+            document.getElementById('finish-view').classList.add('hidden');
+
+            const list = document.getElementById('players-list');
+            list.innerHTML = "";
+            
+            const historyHead = document.getElementById('history-head');
+            let headerHtml = `<tr><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Round</th>`;
+            gameData.Players.forEach(p => {
+                headerHtml += `<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50 border-l">${p.Name}</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Score</th>`;
+            });
+            headerHtml += "</tr>";
+            historyHead.innerHTML = headerHtml;
+
+            let maxTurns = 0;
+            gameData.Players.forEach((p, i) => {
+                const card = document.createElement('div');
+                card.className = "bg-white border-2 border-indigo-50 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow";
+                card.innerHTML = `
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-gray-800">${p.Name}</h3>
+                        <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-semibold">${p.Score} pts</span>
+                    </div>
+                    <p class="text-sm text-gray-500 mb-4">Last word: <span class="font-mono text-gray-800">${p.LastWord || "-"}</span></p>
+                    <div class="space-y-4">
+                        <input type="text" id="input-${i}" placeholder="Word or Score" 
+                               class="w-full p-2 border rounded focus:ring-2 focus:ring-indigo-300 outline-none text-sm uppercase">
+                        <div id="multipliers-${i}" class="flex flex-wrap gap-2 text-xs"></div>
+                        <button onclick="addScore(${i})" 
+                                class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded text-sm transition">
+                            Add Score
+                        </button>
+                    </div>
+                `;
+                list.appendChild(card);
+
+                const input = document.getElementById(`input-${i}`);
+                input.oninput = () => updateMultipliers(i, input.value);
+                
+                if (p.wordHistory && p.wordHistory.length > maxTurns) {
+                    maxTurns = p.wordHistory.length;
+                }
+            });
+
+            const historyBody = document.getElementById('history-body');
+            let bodyHtml = "";
+            for (let t = 0; t < maxTurns; t++) {
+                bodyHtml += `<tr class="${t % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">`;
+                bodyHtml += `<td class="px-4 py-3 text-sm font-medium text-gray-900">${t + 1}</td>`;
+                gameData.Players.forEach(p => {
+                    const score = (p.wordHistory && p.wordHistory[t] !== undefined) ? p.wordHistory[t] : "-";
+                    bodyHtml += `<td class="px-4 py-3 text-sm text-gray-500 border-l">${p.Name}</td><td class="px-4 py-3 text-sm font-semibold text-gray-900">${score}</td>`;
+                });
+                bodyHtml += "</tr>";
+            }
+            historyBody.innerHTML = bodyHtml;
+        }
+
+        function updateMultipliers(playerIndex, value) {
+            const container = document.getElementById(`multipliers-${playerIndex}`);
+            if (isNaN(value) && value.length > 0) {
+                container.innerHTML = value.split('').map((char, charIdx) => `
+                    <div class="flex flex-col items-center">
+                        <span class="text-[10px] text-gray-400 mb-1">${char.toUpperCase()}</span>
+                        <select id="mult-${playerIndex}-${charIdx}" class="border rounded p-1 text-[10px] bg-gray-50">
+                            <option value="none">-</option>
+                            <option value="dl">DL</option>
+                            <option value="tl">TL</option>
+                            <option value="dw">DW</option>
+                            <option value="tw">TW</option>
+                        </select>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = "";
+            }
+        }
+
+        async function addScore(playerIndex) {
+            const inputField = document.getElementById(`input-${playerIndex}`);
+            const input = inputField.value;
+            if (!input) return;
+
+            const multipliers = [];
+            if (isNaN(input)) {
+                for (let i = 0; i < input.length; i++) {
+                    const sel = document.getElementById(`mult-${playerIndex}-${i}`);
+                    multipliers.push(sel ? sel.value : "none");
+                }
+            }
+
+            const response = await fetch('/api/score', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ game: gameData, playerIndex, input, multipliers })
+            });
+            gameData = await response.json();
+            renderGame();
+        }
+
+        function showFinishView() {
+            document.getElementById('game-view').classList.add('hidden');
+            document.getElementById('finish-view').classList.remove('hidden');
+
+            const winners = document.getElementById('winner-selection');
+            winners.innerHTML = gameData.Players.map((p, i) => `
+                <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-white/50 rounded transition">
+                    <input type="radio" name="winner" value="${i}" class="w-4 h-4 text-indigo-600 focus:ring-indigo-500">
+                    <span class="text-gray-700">${p.Name}</span>
+                </label>
+            `).join('');
+
+            const leftovers = document.getElementById('leftovers-inputs');
+            leftovers.innerHTML = `<h3 class="text-lg font-semibold mb-4 text-gray-800">Remaining Points</h3>` + 
+                `<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">` +
+                gameData.Players.map((p, i) => `
+                    <div class="p-4 border rounded-lg bg-gray-50" id="leftover-row-${i}">
+                        <label class="block text-sm font-medium text-gray-600 mb-2">${p.Name}</label>
+                        <input type="number" id="leftover-${i}" value="0" class="w-full p-2 border rounded focus:ring-2 focus:ring-indigo-300 outline-none">
+                    </div>
+                `).join('') + `</div>`;
+
+            document.getElementsByName('winner').forEach(r => {
+                r.onchange = () => {
+                    gameData.Players.forEach((_, i) => {
+                        document.getElementById(`leftover-row-${i}`).style.display = (i == r.value) ? 'none' : 'block';
+                    });
+                };
+            });
+        }
+
+        async function submitFinish() {
+            const winnerRadio = document.querySelector('input[name="winner"]:checked');
+            if (!winnerRadio) {
+                alert("Select who ended the game");
+                return;
+            }
+            const winnerIndex = parseInt(winnerRadio.value);
+            const leftovers = gameData.Players.map((_, i) => {
+                if (i === winnerIndex) return 0;
+                return parseInt(document.getElementById(`leftover-${i}`).value) || 0;
+            });
+
+            const response = await fetch('/api/finish', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ game: gameData, winnerIndex, leftovers })
+            });
+            gameData = await response.json();
+            showResults();
+        }
+
+        function showResults() {
+            document.getElementById('finish-view').classList.add('hidden');
+            document.getElementById('result-view').classList.remove('hidden');
+
+            const sorted = [...gameData.Players].sort((a, b) => b.Score - a.Score);
+            const table = document.getElementById('final-table');
+            table.innerHTML = `
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-indigo-600 text-white">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-bold uppercase">Rank</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold uppercase">Player</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold uppercase">Score</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        ${sorted.map((p, i) => `
+                            <tr class="${i === 0 ? 'bg-yellow-50' : 'bg-white'}">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold ${i === 0 ? 'text-yellow-600' : 'text-gray-500'}">
+                                    ${i === 0 ? '🏆 1' : i + 1}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${p.Name}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">${p.Score}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                <div class="p-6 bg-indigo-50 border-t">
+                    <h3 class="text-2xl font-bold text-indigo-800">Winner: ${sorted[0].Name}! 🎉</h3>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

@@ -7,7 +7,7 @@ description = "Scrabble scorer tool running on Fastly Compute"
 language = "go"
 manifest_version = 3
 name = "wasmScrabbleScorer"
-service_id = ""
+service_id = "ikBJO4tdW65QwifIMpstdE"
 
 [local_server]
 

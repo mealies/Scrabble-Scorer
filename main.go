@@ -64,10 +64,11 @@ func CalculateWordScore(word string, multipliers []string) int {
 }
 
 type Player struct {
-	Name        string `json:"Name"`
-	Score       int    `json:"Score"`
-	LastWord    string `json:"LastWord"`
-	WordHistory []int  `json:"wordHistory"`
+	Name              string `json:"Name"`
+	Score             int    `json:"Score"`
+	LastWord          string `json:"LastWord"`
+	WordHistory       []int  `json:"wordHistory"`
+	CurrentRoundScore int    `json:"currentRoundScore"`
 }
 
 func (p *Player) IncreaseScore(s int) {
@@ -146,7 +147,43 @@ func handleScore(w fsthttp.ResponseWriter, r *fsthttp.Request) {
 		game.Players[req.PlayerIndex].LastWord = req.Input
 	}
 
-	game.Players[req.PlayerIndex].IncreaseScore(score)
+	game.Players[req.PlayerIndex].CurrentRoundScore += score
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(fsthttp.StatusOK)
+	json.NewEncoder(w).Encode(game)
+}
+
+func handleEndRound(w fsthttp.ResponseWriter, r *fsthttp.Request) {
+	if r.Method != "POST" {
+		fsthttp.Error(w, "Method not allowed", fsthttp.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		Game        *Game `json:"game"`
+		PlayerIndex int   `json:"playerIndex"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		fsthttp.Error(w, err.Error(), fsthttp.StatusBadRequest)
+		return
+	}
+
+	if req.Game == nil {
+		fsthttp.Error(w, "No game in progress", fsthttp.StatusBadRequest)
+		return
+	}
+
+	game := req.Game
+	if req.PlayerIndex < 0 || req.PlayerIndex >= len(game.Players) {
+		fsthttp.Error(w, "Invalid player index", fsthttp.StatusBadRequest)
+		return
+	}
+
+	p := game.Players[req.PlayerIndex]
+	p.IncreaseScore(p.CurrentRoundScore)
+	p.CurrentRoundScore = 0
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(fsthttp.StatusOK)
 	json.NewEncoder(w).Encode(game)
@@ -212,6 +249,8 @@ func main() {
 			handleStart(w, r)
 		case "/api/score":
 			handleScore(w, r)
+		case "/api/end-round":
+			handleEndRound(w, r)
 		case "/api/finish":
 			handleFinish(w, r)
 		case "/api/status":

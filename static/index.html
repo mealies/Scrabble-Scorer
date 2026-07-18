@@ -108,15 +108,25 @@
                         <h3 class="text-lg font-bold text-gray-800">${p.Name}</h3>
                         <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-semibold">${p.Score} pts</span>
                     </div>
-                    <p class="text-sm text-gray-500 mb-4">Last word: <span class="font-mono text-gray-800">${p.LastWord || "-"}</span></p>
+                    <div class="flex justify-between items-center text-sm mb-4">
+                        <p class="text-gray-500">Last: <span class="font-mono text-gray-800">${p.LastWord || "-"}</span></p>
+                        <p class="text-indigo-600 font-semibold">Round: ${p.currentRoundScore || 0}</p>
+                    </div>
                     <div class="space-y-4">
                         <input type="text" id="input-${i}" placeholder="Word or Score" 
                                class="w-full p-2 border rounded focus:ring-2 focus:ring-indigo-300 outline-none text-sm uppercase">
                         <div id="multipliers-${i}" class="flex flex-wrap gap-2 text-xs"></div>
-                        <button onclick="addScore(${i})" 
-                                class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded text-sm transition">
-                            Add Score
-                        </button>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="addScore(${i})" 
+                                    class="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded text-sm transition">
+                                Add Word
+                            </button>
+                            <button onclick="endRound(${i})" 
+                                    class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-4 rounded text-sm transition ${p.currentRoundScore > 0 ? '' : 'opacity-50 cursor-not-allowed'}"
+                                    ${p.currentRoundScore > 0 ? '' : 'disabled'}>
+                                End Round
+                            </button>
+                        </div>
                     </div>
                 `;
                 list.appendChild(card);
@@ -175,11 +185,20 @@
                     multipliers.push(sel ? sel.value : "none");
                 }
             }
-
             const response = await fetch('/api/score', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ game: gameData, playerIndex, input, multipliers })
+            });
+            gameData = await response.json();
+            renderGame();
+        }
+
+        async function endRound(playerIndex) {
+            const response = await fetch('/api/end-round', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ game: gameData, playerIndex })
             });
             gameData = await response.json();
             renderGame();

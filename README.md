@@ -40,7 +40,8 @@ A stateless Scrabble scoring application built with Go and running on Fastly Com
    - Enter the word played.
    - (Optional) Assign multipliers to specific letters by selecting them from the dropdowns below the word input.
    - Alternatively, you can enter a raw numeric score if you've already calculated it.
-   - Click "Add Score".
+   - Click "Add Word". You can add multiple words per round.
+   - Once all words for the round are added, click "End Round" to finalize the score for that turn.
 3. **Finish Game**:
    - Once the game is over, click "Finish Game".
    - Select the player who went out first (the winner).

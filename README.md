@@ -42,7 +42,8 @@ A stateless Scrabble scoring application built with Go and running on Fastly Com
    - Alternatively, you can enter a raw numeric score if you've already calculated it.
    - Click "Add Word". You can add multiple words per round.
    - Once all words for the round are added, click "End Round" to finalize the score for that turn.
-3. **Finish Game**:
+3. **Score History**: The score history table now shows the words played by each player in every round, providing a complete record of the game.
+4. **Finish Game**:
    - Once the game is over, click "Finish Game".
    - Select the player who went out first (the winner).
    - Enter the remaining point values for the other players.

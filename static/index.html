@@ -94,7 +94,7 @@
             const historyHead = document.getElementById('history-head');
             let headerHtml = `<tr><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Round</th>`;
             gameData.Players.forEach(p => {
-                headerHtml += `<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50 border-l">${p.Name}</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Score</th>`;
+                headerHtml += `<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50 border-l">${p.Name} (Words)</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Score</th>`;
             });
             headerHtml += "</tr>";
             historyHead.innerHTML = headerHtml;
@@ -145,8 +145,10 @@
                 bodyHtml += `<tr class="${t % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">`;
                 bodyHtml += `<td class="px-4 py-3 text-sm font-medium text-gray-900">${t + 1}</td>`;
                 gameData.Players.forEach(p => {
-                    const score = (p.wordHistory && p.wordHistory[t] !== undefined) ? p.wordHistory[t] : "-";
-                    bodyHtml += `<td class="px-4 py-3 text-sm text-gray-500 border-l">${p.Name}</td><td class="px-4 py-3 text-sm font-semibold text-gray-900">${score}</td>`;
+                    const record = (p.wordHistory && p.wordHistory[t]) ? p.wordHistory[t] : null;
+                    const wordsStr = record ? record.words.join(', ') : "-";
+                    const score = record ? record.score : "-";
+                    bodyHtml += `<td class="px-4 py-3 text-sm text-gray-500 border-l">${wordsStr}</td><td class="px-4 py-3 text-sm font-semibold text-gray-900">${score}</td>`;
                 });
                 bodyHtml += "</tr>";
             }

@@ -63,17 +63,23 @@ func CalculateWordScore(word string, multipliers []string) int {
 	return totalScore * wordMultiplier
 }
 
-type Player struct {
-	Name              string `json:"Name"`
-	Score             int    `json:"Score"`
-	LastWord          string `json:"LastWord"`
-	WordHistory       []int  `json:"wordHistory"`
-	CurrentRoundScore int    `json:"currentRoundScore"`
+type RoundRecord struct {
+	Words []string `json:"words"`
+	Score int      `json:"score"`
 }
 
-func (p *Player) IncreaseScore(s int) {
+type Player struct {
+	Name              string        `json:"Name"`
+	Score             int           `json:"Score"`
+	LastWord          string        `json:"LastWord"`
+	WordHistory       []RoundRecord `json:"wordHistory"`
+	CurrentRoundScore int           `json:"currentRoundScore"`
+	CurrentRoundWords []string      `json:"currentRoundWords"`
+}
+
+func (p *Player) IncreaseScore(s int, words []string) {
 	p.Score += s
-	p.WordHistory = append(p.WordHistory, s)
+	p.WordHistory = append(p.WordHistory, RoundRecord{Words: words, Score: s})
 }
 
 type Game struct {
@@ -99,7 +105,7 @@ func handleStart(w fsthttp.ResponseWriter, r *fsthttp.Request) {
 
 	players := make([]*Player, len(names))
 	for i, name := range names {
-		players[i] = &Player{Name: name, Score: 0, LastWord: "", WordHistory: []int{}}
+		players[i] = &Player{Name: name, Score: 0, LastWord: "", WordHistory: []RoundRecord{}, CurrentRoundWords: []string{}}
 	}
 
 	game := &Game{Players: players}
@@ -148,6 +154,7 @@ func handleScore(w fsthttp.ResponseWriter, r *fsthttp.Request) {
 	}
 
 	game.Players[req.PlayerIndex].CurrentRoundScore += score
+	game.Players[req.PlayerIndex].CurrentRoundWords = append(game.Players[req.PlayerIndex].CurrentRoundWords, req.Input)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(fsthttp.StatusOK)
 	json.NewEncoder(w).Encode(game)
@@ -181,8 +188,9 @@ func handleEndRound(w fsthttp.ResponseWriter, r *fsthttp.Request) {
 	}
 
 	p := game.Players[req.PlayerIndex]
-	p.IncreaseScore(p.CurrentRoundScore)
+	p.IncreaseScore(p.CurrentRoundScore, p.CurrentRoundWords)
 	p.CurrentRoundScore = 0
+	p.CurrentRoundWords = []string{}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(fsthttp.StatusOK)
